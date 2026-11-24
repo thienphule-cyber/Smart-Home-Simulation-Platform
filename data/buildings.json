@@ -1,0 +1,145 @@
+{
+  "version": 2,
+  "schema": {
+    "type": "room type used by rules and ATIOS groups: entry, living, dining, kitchen, bedroom, bathroom, toilet, laundry, storage, outdoor, garage",
+    "lights": "total light fixtures in the room; in this inventory lights = sw + dim + blinding",
+    "sw": "switching lights (1 ESR64PF channel each)",
+    "dim": "dimmable light channels (1 EUD64 each)",
+    "blinding": "blinding / accent lights (1 ESB64 each). These are lights, NOT window blinds",
+    "ac": "AC units (1 AC controller each)",
+    "fans": "ventilation fans (1 ESR64PF relay each)",
+    "sens": "sensors in the room (presence, motion, lux, temperature, humidity, smoke)",
+    "ftke": "FTKE window/door contacts",
+    "pb": "F2T55E wall pushbuttons",
+    "eoa64": "model that carries the room's EOA64 master: EUD64 first, then ESR64PF, then ESB64",
+    "other": "extra devices such as the garage door controller",
+    "infrastructure": "mini or pro set from devices.json; extra_infrastructure adds controllers on top",
+    "atios_groups": "defined once in devices.json and filled from room types and floors"
+  },
+  "buildings": [
+    {
+      "id": "studio",
+      "name": "Studio",
+      "prefix": "st",
+      "floors": 1,
+      "infrastructure": "mini",
+      "daylight_fallback_room": "st_living_room",
+      "expected_totals": {"lights": 12, "sw": 5, "dim": 5, "blinding": 2, "ac": 1, "fans": 2, "pb": 6, "ftke": 3, "atios_groups": 4, "eoa64": 6, "presence": 5, "motion": 0, "lux": 1, "temperature": 1, "humidity": 2, "smoke": 1},
+      "rooms": [
+        {"id": "st_entry", "name": "Entry", "type": "entry", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"presence": 1}, "ftke": 1, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "st_bedroom", "name": "Bedroom", "type": "bedroom", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 0, "fans": 0, "sens": {"presence": 1}, "ftke": 0, "pb": 2, "eoa64": "EUD64"},
+        {"id": "st_living_room", "name": "Living Room", "type": "living", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "lux": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "EUD64"},
+        {"id": "st_bathroom", "name": "Bathroom", "type": "bathroom", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 0, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "st_dining_room", "name": "Dining Room", "type": "dining", "floor": 0, "lights": 3, "sw": 0, "dim": 3, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 0, "pb": 1, "eoa64": "EUD64"},
+        {"id": "st_kitchen", "name": "Kitchen", "type": "kitchen", "floor": 0, "lights": 3, "sw": 3, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "smoke": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"}
+      ]
+    },
+    {
+      "id": "1br",
+      "name": "1 Bedroom",
+      "prefix": "1br",
+      "floors": 1,
+      "infrastructure": "mini",
+      "daylight_fallback_room": "1br_living_room",
+      "expected_totals": {"lights": 10, "sw": 5, "dim": 3, "blinding": 2, "ac": 2, "fans": 2, "pb": 5, "ftke": 6, "atios_groups": 4, "eoa64": 5, "presence": 5, "motion": 0, "lux": 1, "temperature": 2, "humidity": 2, "smoke": 1},
+      "rooms": [
+        {"id": "1br_entry", "name": "Entry", "type": "entry", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"presence": 1}, "ftke": 1, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "1br_living_room", "name": "Living Room", "type": "living", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "lux": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "EUD64"},
+        {"id": "1br_kitchen", "name": "Kitchen", "type": "kitchen", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "smoke": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "1br_bedroom", "name": "Bedroom", "type": "bedroom", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 2, "pb": 2, "eoa64": "EUD64"},
+        {"id": "1br_bathroom", "name": "Bathroom", "type": "bathroom", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"}
+      ]
+    },
+    {
+      "id": "2br",
+      "name": "2 Bedroom",
+      "prefix": "2br",
+      "floors": 1,
+      "infrastructure": "pro",
+      "daylight_fallback_room": "2br_living_room",
+      "expected_totals": {"lights": 21, "sw": 10, "dim": 8, "blinding": 3, "ac": 2, "fans": 2, "pb": 7, "ftke": 21, "atios_groups": 5, "eoa64": 7, "presence": 7, "motion": 0, "lux": 1, "temperature": 2, "humidity": 2, "smoke": 1},
+      "rooms": [
+        {"id": "2br_entry", "name": "Entry", "type": "entry", "floor": 0, "lights": 4, "sw": 4, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"presence": 1}, "ftke": 1, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "2br_living_room", "name": "Living Room", "type": "living", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 0, "fans": 0, "sens": {"lux": 1, "presence": 1}, "ftke": 8, "pb": 1, "eoa64": "EUD64"},
+        {"id": "2br_kitchen", "name": "Kitchen", "type": "kitchen", "floor": 0, "lights": 3, "sw": 3, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "smoke": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "2br_bathroom", "name": "Bathroom", "type": "bathroom", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "2br_bedroom_1", "name": "Bedroom 1", "type": "bedroom", "floor": 0, "lights": 4, "sw": 0, "dim": 3, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 5, "pb": 2, "eoa64": "EUD64"},
+        {"id": "2br_bedroom_2", "name": "Bedroom 2", "type": "bedroom", "floor": 0, "lights": 4, "sw": 0, "dim": 3, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 5, "pb": 2, "eoa64": "EUD64"},
+        {"id": "2br_balcony", "name": "Balcony", "type": "outdoor", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"presence": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF"}
+      ]
+    },
+    {
+      "id": "3br",
+      "name": "3 Bedroom",
+      "prefix": "3br",
+      "floors": 1,
+      "infrastructure": "pro",
+      "daylight_fallback_room": "3br_living_room",
+      "expected_totals": {"lights": 32, "sw": 14, "dim": 14, "blinding": 4, "ac": 3, "fans": 3, "pb": 12, "ftke": 11, "atios_groups": 4, "eoa64": 10, "presence": 8, "motion": 0, "lux": 1, "temperature": 3, "humidity": 3, "smoke": 1},
+      "rooms": [
+        {"id": "3br_entry", "name": "Entry", "type": "entry", "floor": 0, "lights": 7, "sw": 7, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"presence": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "3br_living_room", "name": "Living Room", "type": "living", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 0, "fans": 0, "sens": {"lux": 1, "presence": 1}, "ftke": 0, "pb": 1, "eoa64": "EUD64"},
+        {"id": "3br_dining_room", "name": "Dining Room", "type": "dining", "floor": 0, "lights": 3, "sw": 0, "dim": 3, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 0, "pb": 1, "eoa64": "EUD64"},
+        {"id": "3br_kitchen", "name": "Kitchen", "type": "kitchen", "floor": 0, "lights": 3, "sw": 3, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "smoke": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "3br_bathroom_1", "name": "Bathroom 1", "type": "bathroom", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 3, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "3br_bathroom_2", "name": "Bathroom 2", "type": "bathroom", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "3br_laundry_room", "name": "Laundry Room", "type": "laundry", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 0, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "3br_bedroom_1", "name": "Bedroom 1", "type": "bedroom", "floor": 0, "lights": 7, "sw": 0, "dim": 6, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 3, "pb": 2, "eoa64": "EUD64"},
+        {"id": "3br_bedroom_2", "name": "Bedroom 2", "type": "bedroom", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 2, "pb": 2, "eoa64": "EUD64"},
+        {"id": "3br_bedroom_3", "name": "Bedroom 3", "type": "bedroom", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"}
+      ]
+    },
+    {
+      "id": "h01",
+      "name": "H01 - Single-Storey House",
+      "prefix": "h01",
+      "floors": 1,
+      "infrastructure": "pro",
+      "daylight_fallback_room": "h01_living_room",
+      "expected_totals": {"lights": 30, "sw": 14, "dim": 11, "blinding": 5, "ac": 4, "fans": 4, "pb": 15, "ftke": 11, "atios_groups": 5, "eoa64": 14, "presence": 8, "motion": 1, "lux": 3, "temperature": 4, "humidity": 4, "smoke": 1},
+      "rooms": [
+        {"id": "h01_rear_porch", "name": "Rear Porch", "type": "outdoor", "floor": 0, "lights": 3, "sw": 3, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"lux": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "h01_back_porch", "name": "Back Porch", "type": "outdoor", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"lux": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "h01_garage", "name": "Garage", "type": "garage", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"motion": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF", "other": ["garage_door_controller"]},
+        {"id": "h01_living_room", "name": "Living Room", "type": "living", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 0, "fans": 0, "sens": {"lux": 1, "presence": 1}, "ftke": 2, "pb": 1, "eoa64": "EUD64"},
+        {"id": "h01_dining_room", "name": "Dining Room", "type": "dining", "floor": 0, "lights": 2, "sw": 0, "dim": 2, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 0, "pb": 1, "eoa64": "EUD64"},
+        {"id": "h01_kitchen", "name": "Kitchen", "type": "kitchen", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "smoke": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h01_bathroom_1", "name": "Bathroom 1", "type": "bathroom", "floor": 0, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 2, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h01_bathroom_2", "name": "Bathroom 2", "type": "bathroom", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h01_toilet", "name": "Toilet", "type": "toilet", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1}, "ftke": 0, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h01_laundry_room", "name": "Laundry Room", "type": "laundry", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 0, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h01_bedroom_1", "name": "Bedroom 1", "type": "bedroom", "floor": 0, "lights": 4, "sw": 0, "dim": 3, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 2, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h01_bedroom_2", "name": "Bedroom 2", "type": "bedroom", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h01_bedroom_3", "name": "Bedroom 3", "type": "bedroom", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h01_bedroom_4", "name": "Bedroom 4", "type": "bedroom", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"}
+      ]
+    },
+    {
+      "id": "h02",
+      "name": "H02 - Two-Storey House",
+      "prefix": "h02",
+      "floors": 2,
+      "infrastructure": "pro",
+      "extra_infrastructure": ["wifi_ap_upper_floor"],
+      "daylight_fallback_room": "h02_living_room",
+      "expected_totals": {"lights": 38, "sw": 21, "dim": 12, "blinding": 5, "ac": 4, "fans": 4, "pb": 16, "ftke": 13, "atios_groups": 7, "eoa64": 15, "presence": 9, "motion": 1, "lux": 3, "temperature": 4, "humidity": 4, "smoke": 1},
+      "rooms": [
+        {"id": "h02_porch", "name": "Porch", "type": "outdoor", "floor": 0, "lights": 5, "sw": 5, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"lux": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF"},
+        {"id": "h02_garage", "name": "Garage", "type": "garage", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"motion": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF", "other": ["garage_door_controller"]},
+        {"id": "h02_storage", "name": "Storage", "type": "storage", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 0, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h02_living_room", "name": "Living Room", "type": "living", "floor": 0, "lights": 3, "sw": 0, "dim": 2, "blinding": 1, "ac": 0, "fans": 0, "sens": {"lux": 1, "presence": 1}, "ftke": 3, "pb": 1, "eoa64": "EUD64"},
+        {"id": "h02_dining_room", "name": "Dining Room", "type": "dining", "floor": 0, "lights": 2, "sw": 0, "dim": 2, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 1, "pb": 1, "eoa64": "EUD64"},
+        {"id": "h02_kitchen", "name": "Kitchen", "type": "kitchen", "floor": 0, "lights": 4, "sw": 4, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "smoke": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h02_bathroom_1", "name": "Bathroom 1", "type": "bathroom", "floor": 0, "lights": 1, "sw": 1, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 0, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h02_bedroom_1", "name": "Bedroom 1", "type": "bedroom", "floor": 0, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h02_bathroom_2", "name": "Bathroom 2", "type": "bathroom", "floor": 1, "lights": 3, "sw": 3, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h02_bathroom_3", "name": "Bathroom 3", "type": "bathroom", "floor": 1, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 1, "sens": {"humidity": 1, "presence": 1}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h02_bedroom_2", "name": "Bedroom 2", "type": "bedroom", "floor": 1, "lights": 4, "sw": 0, "dim": 3, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 2, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h02_bedroom_3", "name": "Bedroom 3", "type": "bedroom", "floor": 1, "lights": 2, "sw": 0, "dim": 1, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h02_bedroom_4", "name": "Bedroom 4", "type": "bedroom", "floor": 1, "lights": 4, "sw": 0, "dim": 3, "blinding": 1, "ac": 1, "fans": 0, "sens": {"temperature": 1, "presence": 1}, "ftke": 1, "pb": 2, "eoa64": "EUD64"},
+        {"id": "h02_laundry_room", "name": "Laundry Room", "type": "laundry", "floor": 1, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {}, "ftke": 1, "pb": 1, "eoa64": "ESR64PF"},
+        {"id": "h02_balcony", "name": "Balcony", "type": "outdoor", "floor": 1, "lights": 2, "sw": 2, "dim": 0, "blinding": 0, "ac": 0, "fans": 0, "sens": {"lux": 1}, "ftke": 0, "pb": 0, "eoa64": "ESR64PF"}
+      ]
+    }
+  ]
+}

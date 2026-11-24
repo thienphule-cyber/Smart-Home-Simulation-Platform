@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "note": "Specs under 'estimated' are assumptions (no public datasheet value found or model not specified in the inventory). Updated for control logic v4.1: ESB64 is a blinding light, not a window blind.",
+  "room_types": ["entry", "living", "dining", "kitchen", "bedroom", "bathroom", "toilet", "laundry", "storage", "outdoor", "garage"],
+  "expansion": {
+    "ESR64PF": "sw + fans per room",
+    "EUD64": "dim per room",
+    "ESB64": "blinding per room (blinding / accent light, NOT a window blind)",
+    "F2T55E": "pb per room",
+    "FTKE": "ftke per room",
+    "AC_CONTROLLER": "ac per room",
+    "GARAGE_DOOR_CONTROLLER": "one per 'other' entry",
+    "eoa64": "every room with lights has one master actuator carrying the EOA64, given by the room's eoa64 field; the other devices of the room are reached through ATIOS groups or the hub",
+    "atios_groups": "see atios_groups below; a group holds every light (ESR64PF, EUD64, ESB64) of the rooms it selects, and is only created when it has at least one member",
+    "instance_id": "<room_id>_<model>_<index>"
+  },
+  "models": {
+    "ESR64PF": {
+      "type": "switching_actuator", "vendor": "Eltako", "full_name": "ESR64PF-IPM",
+      "channels": 1, "contact": "1 NO potential-free", "rated_current_a": 16, "rated_voltage_vac": 250,
+      "protocols": ["Wi-Fi", "Matter", "EnOcean via EOA64"],
+      "commands": ["on", "off", "toggle"], "temp_range_c": [-20, 50],
+      "note": "Switching lights can only be ON or OFF; a percentage level is never applied to them"
+    },
+    "EUD64": {
+      "type": "dimming_actuator", "vendor": "Eltako", "full_name": "EUD64NPN-IPM",
+      "channels": 1, "max_load_w": 300, "level_range_pct": [0, 100],
+      "protocols": ["Wi-Fi", "Matter", "EnOcean via EOA64", "REST API"],
+      "commands": ["on", "off", "toggle", "set_level"],
+      "estimated": {"min_level_pct": 5, "fade_time_s": 1}
+    },
+    "ESB64": {
+      "type": "blinding_light", "vendor": "Eltako", "full_name": "ESB64NP-IPM",
+      "channels": 1, "rated_current_a": 10, "rated_voltage_vac": 250,
+      "protocols": ["Wi-Fi", "Matter", "EnOcean via EOA64"],
+      "eoa64_optional": true,
+      "level_range_pct": [0, 100],
+      "modes": ["normal", "blinding"],
+      "commands": ["on", "off", "toggle", "set_level", "set_mode"],
+      "estimated": {"min_level_pct": 5, "fade_time_s": 1},
+      "note": "Modelled as a blinding / accent light per control logic v4.1. The earlier inventory listed shutter-actuator specs for this model (1+1 NO contacts, auto end-position detection, travel time). Check the datasheet before relying on either reading."
+    },
+    "EOA64": {
+      "type": "enocean_receiver", "vendor": "Eltako", "full_name": "EOA64",
+      "description": "EnOcean plug-in adapter for Series 64 actuators",
+      "role": "Receives F2T55E and FTKE telegrams and forwards them to the room's master actuator (direct mode)"
+    },
+    "F2T55E": {
+      "type": "pushbutton", "vendor": "Eltako", "protocol": "EnOcean", "battery_free": true,
+      "events": ["press", "double_press", "long_press", "release"],
+      "estimated": {"long_press_ms": 600, "double_press_ms": 400}
+    },
+    "FTKE": {
+      "type": "window_contact", "vendor": "Eltako", "protocol": "EnOcean",
+      "states": ["open", "closed"], "output": "binary"
+    },
+    "FP2": {
+      "type": "presence_sensor", "vendor": "Aqara", "model": "Presence Sensor FP2",
+      "technology": "mmWave radar", "range_m": 8, "coverage_m2": 40, "max_targets": 5, "fov_deg": 120,
+      "measures": ["presence", "lux"], "power": "USB-C", "ip_rating": "IPX5",
+      "protocols": ["Wi-Fi", "HomeKit"]
+    },
+    "MOTION_P1": {
+      "type": "motion_sensor", "vendor": "Aqara", "model": "Motion Sensor P1",
+      "measures": ["motion"], "location": "garage",
+      "estimated": {"range_m": 7, "fov_deg": 170, "timeout_s_range": [1, 200], "protocol": "Zigbee"}
+    },
+    "LUX_P1": {
+      "type": "lux_sensor", "vendor": "Aqara", "model": "Motion and Light Sensor P1",
+      "measures": ["lux"],
+      "estimated": {"range_lux": [0, 10000], "report_interval_s": 60, "protocol": "Zigbee"}
+    },
+    "TEMP_SENSOR": {
+      "type": "temperature_sensor", "model": "generic",
+      "measures": ["temperature_c"],
+      "estimated": {"range_c": [-10, 50], "accuracy_c": 0.5, "report_interval_s": 60}
+    },
+    "HUMIDITY_SENSOR": {
+      "type": "humidity_sensor", "model": "generic",
+      "measures": ["humidity_pct"],
+      "estimated": {"range_pct": [0, 100], "accuracy_pct": 3, "report_interval_s": 60}
+    },
+    "SMOKE_SENSOR": {
+      "type": "smoke_sensor", "vendor": "Clipsal", "model": "Firetek smoke alarm",
+      "states": ["normal", "alarm", "fault"], "simulation_only": true,
+      "disclaimer": "State and warning simulation only. Not a certified fire alarm replacement."
+    },
+    "AC_UNIT": {
+      "type": "air_conditioner", "model": "generic split unit",
+      "modes": ["off", "cool", "heat", "dry", "fan", "auto"], "fan_speeds": ["auto", "low", "medium", "high"],
+      "estimated": {"setpoint_c_range": [16, 30], "setpoint_step_c": 1, "min_off_time_s": 180}
+    },
+    "AC_CONTROLLER": {
+      "type": "ac_controller", "description": "1 controller per AC unit",
+      "commands": ["power", "mode", "set_temperature", "fan_speed"]
+    },
+    "FAN": {
+      "type": "ventilation_fan", "control": "on_off_via_ESR64PF", "commands": ["on", "off"]
+    },
+    "GARAGE_DOOR_CONTROLLER": {
+      "type": "garage_door_controller", "commands": ["open", "close", "stop"],
+      "states": ["open", "closed", "opening", "closing", "stopped"],
+      "estimated": {"travel_time_s": 15}
+    },
+    "LIGHT_SWITCHED": {"type": "light", "capability": "on_off", "driver": "ESR64PF"},
+    "LIGHT_DIMMABLE": {"type": "light", "capability": "dimmable", "driver": "EUD64"},
+    "LIGHT_BLINDING": {"type": "light", "capability": "blinding", "driver": "ESB64", "note": "Accent / spot light with level 0-100% and normal / blinding mode"}
+  },
+  "controllers": {
+    "eltako": {
+      "name": "Eltako Series 64 + EnOcean",
+      "scope": "individual physical control",
+      "flow": "F2T55E -> EOA64 -> room master actuator (ESR64PF / EUD64 / ESB64) -> device",
+      "members": ["F2T55E", "EOA64", "ESR64PF", "EUD64", "ESB64", "FTKE"]
+    },
+    "homey_pro_mini": {"name": "Homey Pro Mini", "role": "Logic and individual device control", "needs": ["homey_bridge"]},
+    "homey_bridge": {"name": "Homey Bridge", "role": "Radio bridge for Homey Pro Mini"},
+    "homey_pro": {"name": "Homey Pro", "role": "Logic and individual device control"},
+    "apple_hub": {"name": "Apple Hub", "role": "Apple Home UI, Siri, scenes, geofence"},
+    "atios_smartcore": {
+      "name": "Atios SmartCore ADE-R12",
+      "role": "Groups lights (switching, dimming, blinding), scenes, Matter gateway",
+      "relay_outputs": 12, "relay_rating_a": 16, "inputs": 12,
+      "limits": {"control_gear_max": 64, "control_devices_max": 64, "groups_max": 16, "scenes_max": 16},
+      "counts_as_control_gear": ["ESR64PF", "EUD64", "ESB64"],
+      "counts_as_control_device": ["F2T55E", "FTKE", "FP2", "MOTION_P1", "LUX_P1"],
+      "note": "Group and scene numbers follow the 0-15 numbering of control logic v4.1. They are logical groups mapped to Eltako channels (as in the earlier inventory note); DALI wiring is not simulated. Each group must reference real devices."
+    },
+    "wifi_coverage": {"name": "Wi-Fi coverage", "role": "Network connectivity"},
+    "wifi_ap_upper_floor": {"name": "Extra Wi-Fi access point (upper floor)", "role": "Wi-Fi / Zigbee coverage for floor 1 of two-storey buildings"}
+  },
+  "atios_groups": [
+    {"group": 0, "name": "All Home Lights", "select": "all"},
+    {"group": 1, "name": "Common Areas", "select": {"types": ["entry", "living", "dining", "kitchen", "laundry", "storage"]}},
+    {"group": 2, "name": "Bedrooms", "select": {"types": ["bedroom"]}},
+    {"group": 3, "name": "Bathrooms", "select": {"types": ["bathroom", "toilet"]}},
+    {"group": 4, "name": "Outdoor", "select": {"types": ["outdoor", "garage"]}},
+    {"group": 5, "name": "Emergency / Security", "select": "reserved", "note": "In the document but the inventory has no emergency or security lights yet; kept free"},
+    {"group": 6, "name": "Floor 0 Lights", "select": {"floor": 0}, "only_if_floors_above": 1},
+    {"group": 7, "name": "Floor 1 Lights", "select": {"floor": 1}, "only_if_floors_above": 1}
+  ],
+  "infrastructure_sets": {
+    "mini": ["homey_pro_mini", "homey_bridge", "apple_hub", "EOA64", "atios_smartcore", "wifi_coverage"],
+    "pro": ["homey_pro", "apple_hub", "EOA64", "atios_smartcore", "wifi_coverage"]
+  },
+  "sensor_to_model": {
+    "presence": "FP2", "motion": "MOTION_P1", "lux": "LUX_P1",
+    "temperature": "TEMP_SENSOR", "humidity": "HUMIDITY_SENSOR", "smoke": "SMOKE_SENSOR"
+  }
+}

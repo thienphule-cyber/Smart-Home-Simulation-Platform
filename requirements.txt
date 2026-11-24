@@ -1,0 +1,15 @@
+# Smart Building Digital Twin & Control Simulation Platform
+# Target: Python 3.12
+
+# Web framework and ASGI server
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0   # "standard" extra includes WebSocket support (websockets) and uvloop
+
+# Data validation and settings (device models, constraints, states)
+pydantic>=2.8,<3.0
+
+# Read the Excel inventory files (Floor_Plan_Device_Calculating.xlsx, Specific_Logbook.xlsx)
+openpyxl>=3.1,<4.0
+
+# Optional: Excel parsing and data cleaning into buildings.json / devices.json
+pandas>=2.2,<3.0

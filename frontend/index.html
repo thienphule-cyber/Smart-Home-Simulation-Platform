@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Building Digital Twin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Smart Building Digital Twin</h1>
+  <select id="building" aria-label="Select building"></select>
+  <label class="inline">Hour
+    <input id="hour" type="range" min="0" max="23.5" step="0.5" value="12">
+    <b id="hourLabel">12:00</b>
+  </label>
+  <button id="live" title="Use the computer clock">Live clock</button>
+  <label class="inline">Speed
+    <select id="speed">
+      <option value="1">1x</option>
+      <option value="10">10x</option>
+      <option value="60">60x</option>
+      <option value="300">300x</option>
+    </select>
+  </label>
+  <button id="smoke">Trigger smoke alarm</button>
+  <span id="status"></span>
+  <span id="conn" class="conn">offline</span>
+</header>
+<main>
+  <div id="plan"></div>
+  <aside id="panel"></aside>
+</main>
+<div id="toast" role="status" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

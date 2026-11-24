@@ -1,0 +1,310 @@
+{
+  "version": 2,
+  "note": "Based on control logic v4.1. Thresholds and timings are estimated unless the document gives them, and can be tuned. A rule runs only when the devices it requires exist in the room (or building). Room values come from room_profiles by room type and fall back to thresholds. 'room_lights' means switching + dimmable lights; blinding lights are changed by scenes only.",
+  "priority": [
+    {"level": 1, "source": "safety"},
+    {"level": 2, "source": "pushbutton"},
+    {"level": 3, "source": "online"},
+    {"level": 4, "source": "automation"}
+  ],
+  "override": {
+    "pushbutton_timeout_min": 60,
+    "online_timeout_min": 30,
+    "resume": "automatic",
+    "safety_override_allowed": false
+  },
+  "modes": {"default": "home", "available": ["home", "away"]},
+  "geofence": {
+    "source": "apple_hub",
+    "events": ["arrive", "leave"],
+    "note": "Geofence events come from the hub (Apple Home / Homey). 'arrive' must be processed before any door contact event so that away mode is cleared before R18 can fire."
+  },
+  "time_profiles": {
+    "morning": {"from": "06:00", "to": "09:00"},
+    "day": {"from": "09:00", "to": "18:00"},
+    "evening": {"from": "18:00", "to": "22:00"},
+    "night": {"from": "22:00", "to": "06:00"}
+  },
+  "sun": {"sunrise": "06:00", "sunset": "19:00", "estimated": true},
+  "thresholds": {
+    "lux_low": 150, "on_level_pct": 100, "vacancy_s": 300,
+    "ac_on_temp_c": 26, "ac_off_temp_c": 23, "ac_setpoint_c": 24,
+    "fan_on_humidity_pct": 70, "fan_off_humidity_pct": 60, "fan_min_run_s": 120,
+    "window_open_ac_off_s": 120, "window_open_alert_s": 900
+  },
+  "room_profiles": {
+    "entry": {
+      "lux_gate": true, "lux_low": 80, "on_level_pct": 100, "vacancy_s": 180,
+      "night_light": {"from": "23:00", "to": "06:00", "keep_on_ratio": 0.5}
+    },
+    "living": {"lux_gate": true, "lux_low": 150, "on_level_pct": 70, "vacancy_s": 900, "ac": {"on_temp_c": 25, "setpoint_c": 24}},
+    "dining": {"lux_gate": true, "lux_low": 120, "on_level_pct": 50, "presence_from": "living", "vacancy_s": 900},
+    "kitchen": {"fan_on_humidity_pct": 65, "humidity_rise": {"pct": 10, "window_s": 300}, "vacancy_s": 600},
+    "bedroom": {"on_level_pct": {"day": 40, "night": 20}, "vacancy_s": 1200, "ac": {"on_temp_c": 26, "setpoint_c": 25}},
+    "bathroom": {
+      "on_level_pct": 100, "vacancy_s": 10,
+      "fan_on_humidity_pct": 70, "humidity_rise": {"pct": 10, "window_s": 300},
+      "fan_run_on_after_vacancy": {"s": 480, "if_humidity_above_pct": 60},
+      "anti_mold": {"at": "09:00", "run_s": 600}
+    },
+    "toilet": {
+      "on_level_pct": 100, "fan_on_humidity_pct": 65, "fan_off_humidity_pct": 55, "fan_off_delay_s": 300,
+      "light_auto_off_s": 600
+    },
+    "laundry": {"vacancy_s": 300},
+    "storage": {"vacancy_s": 180},
+    "outdoor": {"lux_gate": true, "lux_low": 80, "lux_off": 150, "on_level_pct": 100, "vacancy_s": 300},
+    "garage": {"motion_on_s": 300, "door_open_notify_s": 600}
+  },
+  "rules": [
+    {
+      "id": "R01_smoke_safety", "name": "Smoke alarm response", "priority_source": "safety",
+      "requires": ["smoke"], "scope": "building",
+      "trigger": {"device": "smoke", "state": "alarm"},
+      "defer_to": {
+        "rule": "R01b_kitchen_smoke_precheck",
+        "when": {"source_room_type": "kitchen", "cooking_context": true}
+      },
+      "actions": [
+        {"scene": "emergency"},
+        {"target": "all_fans", "command": "off"},
+        {"target": "all_ac", "command": "off"},
+        {"target": "system", "command": "notify", "message": "Smoke alarm triggered"},
+        {"target": "automation", "command": "lock"}
+      ],
+      "release": {"trigger": {"device": "smoke", "state": "normal"}, "requires_manual_reset": true},
+      "note": "Runs immediately unless the alarm comes from a kitchen during a cooking context, in which case R01b runs a short pre-check first."
+    },
+    {
+      "id": "R01b_kitchen_smoke_precheck", "name": "Kitchen smoke pre-check (cooking vs fire)", "priority_source": "safety",
+      "requires": ["smoke", "presence"], "scope": "room", "applies_to_types": ["kitchen"],
+      "trigger": {"device": "smoke", "state": "alarm"},
+      "conditions": [
+        {"presence": true},
+        {"cooking_context": {"any": [{"scene": "cooking"}, {"humidity_rise": "room_profile.humidity_rise"}, {"fans": "on"}]}}
+      ],
+      "actions": [
+        {"target": "fans", "command": "on"},
+        {"target": "system", "command": "notify", "message": "Smoke detected in kitchen while cooking: checking"}
+      ],
+      "confirm_window_s": 60,
+      "escalate_to": "R01_smoke_safety",
+      "escalate_if": [
+        {"device": "smoke", "state": "alarm", "for_s": "confirm_window_s"},
+        {"device": "smoke", "state": "alarm", "scope": "other_room"},
+        {"device": "presence", "state": false}
+      ],
+      "note": "Fail-safe: any doubt escalates to the full smoke response. If the smoke clears inside the window the alarm is treated as cooking smoke. Simulation only, not a certified fire alarm."
+    },
+    {
+      "id": "R02_presence_light_on", "name": "Presence turns lights on", "priority_source": "automation",
+      "requires": ["presence", "lights"], "scope": "room", "active_modes": ["home"], "lux_source": "room_or_fallback",
+      "trigger": {"device": "presence", "state": true},
+      "conditions": [{"when": "room_profile.lux_gate", "any": [{"lux_below": "room_profile.lux_low"}, {"profile": ["evening", "night"]}]}],
+      "actions": [
+        {"target": "switching_lights", "command": "on"},
+        {"target": "dimmable_lights", "command": "set_level", "level_from": "room_profile.on_level_pct"}
+      ]
+    },
+    {
+      "id": "R03_vacancy_light_off", "name": "Vacancy turns lights off", "priority_source": "automation",
+      "requires": ["presence", "lights"], "scope": "room",
+      "trigger": {"device": "presence", "state": false, "for_s": "room_profile.vacancy_s"},
+      "actions": [
+        {"target": "switching_lights", "command": "off"},
+        {"target": "dimmable_lights", "command": "set_level", "level_pct": 0},
+        {"target": "blinding_lights", "command": "off"}
+      ]
+    },
+    {
+      "id": "R04_night_light", "name": "Entry night light", "priority_source": "automation",
+      "requires": ["switching_lights"], "scope": "room", "active_modes": ["home"], "applies_if": "room_profile.night_light",
+      "trigger": {"time_window": "room_profile.night_light"},
+      "conditions": [{"vacant": true}],
+      "actions": [{"target": "switching_lights", "command": "keep_on_ratio", "ratio_from": "room_profile.night_light.keep_on_ratio"}],
+      "note": "Switching lights cannot dim, so the night light keeps a share of the fixtures on (at least one) and turns the rest off"
+    },
+    {
+      "id": "R05_outdoor_dusk_lights", "name": "Outdoor lights at dusk", "priority_source": "automation",
+      "requires": ["switching_lights"], "scope": "room", "active_modes": ["home"], "applies_to_types": ["outdoor"], "lux_source": "room_or_fallback",
+      "trigger": {"any": [{"lux_below": "room_profile.lux_low"}, {"after": "sun.sunset"}]},
+      "actions": [{"target": "switching_lights", "command": "on"}],
+      "off_when": [{"lux_above": "room_profile.lux_off"}, {"between": ["sun.sunrise", "sun.sunset"]}]
+    },
+    {
+      "id": "R06_natural_light_off", "name": "Lights off when windows are open and daylight is enough", "priority_source": "automation",
+      "requires": ["ftke", "lux", "lights"], "scope": "room", "active_modes": ["home"], "lux_source": "room_or_fallback",
+      "params_by_room": {
+        "2br_living_room": {"min_open_windows": 3, "lux_above": 400},
+        "h02_living_room": {"min_open_windows": 2, "lux_above": 400}
+      },
+      "trigger": {"open_windows_at_least": "params.min_open_windows", "lux_above": "params.lux_above"},
+      "actions": [
+        {"target": "switching_lights", "command": "off"},
+        {"target": "dimmable_lights", "command": "set_level", "level_pct": 0}
+      ]
+    },
+    {
+      "id": "R07_dining_follows_living", "name": "Dining lights follow presence in the living room", "priority_source": "automation",
+      "requires": ["lights"], "scope": "room", "active_modes": ["home"], "applies_to_types": ["dining"], "lux_source": "room_or_fallback",
+      "trigger": {"device": "presence", "room_type_from": "room_profile.presence_from", "state": true},
+      "conditions": [{"lux_below": "room_profile.lux_low"}],
+      "actions": [{"target": "dimmable_lights", "command": "set_level", "level_from": "room_profile.on_level_pct"}],
+      "off_when": [{"source_vacant_for_s": "room_profile.vacancy_s"}]
+    },
+    {
+      "id": "R08_ac_temp_presence", "name": "AC control by temperature and presence", "priority_source": "automation",
+      "requires": ["temperature", "presence", "ac"], "scope": "room",
+      "trigger": {"device": "temperature", "above": "room_profile.ac.on_temp_c"},
+      "conditions": [{"presence": true}, {"window": "closed"}],
+      "actions": [{"target": "ac", "command": "set", "mode": "cool", "setpoint_from": "room_profile.ac.setpoint_c", "fan_speed": "auto"}],
+      "off_when": [{"temperature_below": "ac_off_temp_c"}, {"vacant_for_s": "room_profile.vacancy_s"}]
+    },
+    {
+      "id": "R09_ac_window_open", "name": "Pause AC when a window is open", "priority_source": "automation",
+      "requires": ["ftke", "ac"], "scope": "room",
+      "trigger": {"device": "ftke", "state": "open", "for_s": "window_open_ac_off_s"},
+      "actions": [{"target": "ac", "command": "off"}, {"target": "system", "command": "notify", "message": "AC paused: window open"}],
+      "release": {"device": "ftke", "state": "closed", "resume_rule": "R08_ac_temp_presence"}
+    },
+    {
+      "id": "R10_fan_humidity", "name": "Ventilation fan by humidity", "priority_source": "automation",
+      "requires": ["humidity", "fans"], "scope": "room",
+      "trigger": {"any": [{"humidity_above": "room_profile.fan_on_humidity_pct"}, {"humidity_rise": "room_profile.humidity_rise"}]},
+      "actions": [{"target": "fans", "command": "on"}],
+      "off_when": [{"humidity_below": "room_profile.fan_off_humidity_pct", "delay_s": "room_profile.fan_off_delay_s"}],
+      "run_on_after_vacancy": "room_profile.fan_run_on_after_vacancy",
+      "min_run_s": "fan_min_run_s"
+    },
+    {
+      "id": "R11_garage_light_motion", "name": "Garage lighting by motion", "priority_source": "automation",
+      "requires": ["motion", "switching_lights"], "scope": "room",
+      "trigger": {"device": "motion", "state": true},
+      "actions": [{"target": "switching_lights", "command": "on"}],
+      "off_when": [{"no_motion_for_s": "room_profile.motion_on_s"}]
+    },
+    {
+      "id": "R12_garage_door_manual", "name": "Garage door is user controlled only", "priority_source": "online",
+      "requires": ["garage_door_controller"], "scope": "room",
+      "trigger": {"user_command": ["open", "close", "stop"]},
+      "actions": [{"target": "garage_door_controller", "command": "from_user"}],
+      "automation_allowed": false
+    },
+    {
+      "id": "R13_window_open_alert", "name": "Window left open alert", "priority_source": "automation",
+      "requires": ["ftke"], "scope": "room",
+      "trigger": {"device": "ftke", "state": "open", "for_s": "window_open_alert_s"},
+      "actions": [{"target": "system", "command": "notify", "message": "Window or door open for 15 minutes"}]
+    },
+    {
+      "id": "R14_bathroom_anti_mold", "name": "Daily bathroom fan run", "priority_source": "automation",
+      "requires": ["fans"], "scope": "room", "active_modes": ["home"], "applies_to_types": ["bathroom"],
+      "trigger": {"schedule_at": "room_profile.anti_mold.at"},
+      "actions": [{"target": "fans", "command": "on", "run_for_s": "room_profile.anti_mold.run_s"}]
+    },
+    {
+      "id": "R15_toilet_light_auto_off", "name": "Toilet light turns off by itself", "priority_source": "automation",
+      "requires": ["switching_lights"], "scope": "room", "applies_to_types": ["toilet"],
+      "trigger": {"lights": "on", "for_s": "room_profile.light_auto_off_s"},
+      "actions": [{"target": "switching_lights", "command": "off"}]
+    },
+    {
+      "id": "R16_garage_door_alerts", "name": "Garage door open alerts", "priority_source": "automation",
+      "requires": ["garage_door_controller"], "scope": "room",
+      "trigger": {"device": "garage_door_controller", "state_not": "closed"},
+      "actions": [{"target": "switching_lights", "command": "on"}, {"target": "system", "command": "notify", "message": "Garage door opened"}],
+      "repeat_notify": {"after_s": "room_profile.door_open_notify_s", "message": "Garage door has been open for 10 minutes"}
+    },
+    {
+      "id": "R17_away_mode", "name": "Away mode turns lights off", "priority_source": "automation",
+      "requires": ["lights"], "scope": "building",
+      "trigger": {"mode": "away"},
+      "actions": [{"target": "all_lights", "command": "off"}, {"target": "system", "command": "notify", "message": "Away mode on"}]
+    },
+    {
+      "id": "R18_intrusion_alert", "name": "Intrusion alert while away", "priority_source": "automation",
+      "requires": [], "scope": "building",
+      "trigger": {"mode": "away", "any": [{"device": "ftke", "state": "open"}, {"device": "motion", "state": true}]},
+      "actions": [
+        {"target": "triggering_room_lights", "command": "on", "note": "stands in for the flashing light"},
+        {"target": "system", "command": "notify", "message": "Intrusion alert"}
+      ]
+    },
+    {
+      "id": "R19_geofence_arrive_home", "name": "Arriving home clears away mode", "priority_source": "automation",
+      "requires": [], "scope": "building",
+      "trigger": {"geofence": "arrive"},
+      "actions": [
+        {"target": "mode", "command": "set", "value": "home"},
+        {"target": "system", "command": "notify", "message": "Welcome home: away mode off"}
+      ]
+    },
+    {
+      "id": "R20_welcome_entry_lights", "name": "Welcome Home: entry lights when the door opens", "priority_source": "automation",
+      "requires": ["switching_lights", "ftke"], "scope": "room", "applies_to_types": ["entry"],
+      "trigger": {"geofence": "arrive", "then": {"device": "ftke", "state": "open", "within_s": 600}},
+      "actions": [{"target": "switching_lights", "command": "on"}]
+    },
+    {
+      "id": "R21_welcome_outdoor_lights", "name": "Welcome Home: porch lights when dark", "priority_source": "automation",
+      "requires": ["switching_lights"], "scope": "room", "applies_to_types": ["outdoor"],
+      "only_room_ids": ["h01_rear_porch", "h02_porch"], "lux_source": "room_or_fallback",
+      "trigger": {"geofence": "arrive"},
+      "conditions": [{"any": [{"lux_below": "room_profile.lux_low"}, {"after": "sun.sunset"}]}],
+      "actions": [{"target": "switching_lights", "command": "on"}]
+    },
+    {
+      "id": "R22_geofence_garage_door", "name": "Welcome Home: open garage door (opt-in)", "priority_source": "online",
+      "enabled": false, "requires_user_opt_in": true,
+      "requires": ["garage_door_controller"], "scope": "room",
+      "trigger": {"geofence": "arrive"},
+      "actions": [
+        {"target": "garage_door_controller", "command": "open"},
+        {"target": "switching_lights", "command": "on"}
+      ],
+      "note": "Disabled by default because R12 says the garage door is user controlled only. The user must enable it explicitly; it then counts as a user-configured command, not automation."
+    }
+  ],
+  "scenes": [
+    {"id": "all_off", "scene": 0, "name": "All Off", "targets": [{"select": "all", "level_pct": 0, "blinding_pct": 0}]},
+    {"id": "welcome_home", "scene": 1, "name": "Welcome Home", "targets": [
+      {"select": {"types": ["entry"]}, "level_pct": 100},
+      {"select": {"types": ["living", "kitchen", "laundry", "storage"]}, "level_pct": 100},
+      {"select": {"types": ["dining"]}, "level_pct": 70},
+      {"select": {"types": ["bedroom"]}, "level_pct": 50}
+    ]},
+    {"id": "sleep", "scene": 2, "name": "Sleep", "keep_night_light": true, "targets": [{"select": "all", "level_pct": 0, "blinding_pct": 0}]},
+    {"id": "movie_night", "scene": 3, "name": "Movie Night", "targets": [{"select": {"types": ["living"]}, "level_pct": 15, "switching": "off", "blinding_pct": 0}]},
+    {"id": "emergency", "scene": 4, "name": "Emergency", "targets": [{"select": "all", "level_pct": 100, "blinding_pct": 100}]},
+    {"id": "night_light", "scene": 5, "name": "Night Light", "targets": [
+      {"select": {"types": ["entry"]}, "night_light": true},
+      {"select": {"types": ["outdoor", "garage"]}, "switching": "on"},
+      {"select": {"types": ["living", "dining"]}, "level_pct": 10, "switching": "off"},
+      {"select": {"types": ["bathroom", "toilet"]}, "switching": "on", "only_buildings": ["studio"]}
+    ]},
+    {"id": "reading", "scene": 6, "name": "Reading", "targets": [{"select": {"types": ["bedroom"]}, "level_pct": 50, "switching": "on", "blinding_pct": 80}]},
+    {"id": "cooking", "scene": 7, "name": "Cooking", "targets": [
+      {"select": {"types": ["kitchen"]}, "level_pct": 100},
+      {"select": {"types": ["entry", "living", "dining", "laundry", "storage"]}, "level_pct": 60}
+    ]},
+    {"id": "party", "scene": 8, "name": "Party", "targets": [{"select": {"types": ["living"]}, "level_pct": 60, "switching": "on", "blinding_pct": 100}]},
+    {"id": "dinner", "scene": 9, "name": "Dinner", "targets": [{"select": {"types": ["dining"]}, "level_pct": 80}]},
+    {"id": "relax", "scene": 10, "name": "Relax", "targets": [{"select": {"types": ["bedroom"]}, "level_pct": 30, "blinding_pct": 0}]}
+  ],
+  "pushbuttons": {
+    "paths": {
+      "direct": "Same-room lights through the room's EOA64 master (EnOcean, works without Wi-Fi)",
+      "hub": "Scenes, AC, cross-room and cross-floor commands go through the hub (Homey / Apple Hub) and need Wi-Fi"
+    },
+    "default": {"press": "room_lights:toggle", "long_press": "room_lights:dim_cycle"},
+    "by_type": {
+      "bedroom": [
+        {"label": "door", "press": "room_lights:toggle", "double_press": "scene:sleep", "long_press": "room_lights:dim_cycle"},
+        {"label": "bedside", "press": "room_lights:toggle_at_20", "long_press": "room_lights:dim_down"}
+      ],
+      "living": [
+        {"label": "wall", "press": "room_lights:toggle", "double_press": "scene:movie_night", "long_press": "room_lights:dim_cycle"}
+      ]
+    }
+  }
+}

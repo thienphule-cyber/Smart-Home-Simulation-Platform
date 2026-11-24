@@ -1,0 +1,19 @@
+﻿{
+  "building": "models/building/studio.glb",
+  "devices": {
+    "LIGHT_SWITCHED": "models/devices/light.glb",
+    "LIGHT_DIMMABLE": "models/devices/light_dim.glb",
+    "BLIND": "models/devices/blind.glb",
+    "AC_UNIT": "models/devices/ac.glb",
+    "FAN": "models/devices/fan.glb",
+    "F2T55E": "models/devices/pushbutton.glb",
+    "FTKE": "models/devices/window_contact.glb",
+    "FP2": "models/devices/presence_sensor.glb",
+    "MOTION_P1": "models/devices/motion_sensor.glb",
+    "LUX_P1": "models/devices/lux_sensor.glb",
+    "TEMP_SENSOR": "models/devices/temp_sensor.glb",
+    "HUMIDITY_SENSOR": "models/devices/humidity_sensor.glb",
+    "SMOKE_SENSOR": "models/devices/smoke_sensor.glb",
+    "GARAGE_DOOR_CONTROLLER": "models/devices/garage_door.glb"
+  }
+}
